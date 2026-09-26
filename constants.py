@@ -1,0 +1,2 @@
+FILLCOLOR = "black"
+BACKROUND_COLOR = "white"

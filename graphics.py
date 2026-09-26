@@ -1,42 +1,97 @@
 from tkinter import Tk, BOTH, Canvas
+from constants import *
 
 class Window:
-    def __init__(self, width, height, title="MazeSolver"):
-        self.width = width
-        self.height = height
-        self.rootWidget = Tk()
-        self.rootWidget.title(title)
-        self.rootWidget.protocol("WM_DELETE_WINDOW", self.close)
-        self.canvas = Canvas(self.rootWidget, bg="white", height=self.height, width=self.width)
-        self.canvas.pack(fill=BOTH, expand=1)
-        self.windowRunning = False
-        print("Initializing Window")
+    def __init__(self, width: int, height: int) -> None:
+        self.__root = Tk()
+        self.__root.title("Maze Solver")
+        self.__root.protocol("WM_DELETE_WINDOW", self.close)
+        self.__canvas = Canvas(self.__root, bg="white", height=height, width=width)
+        self.__canvas.pack(fill=BOTH, expand=1)
+        self.__running = False
+        print("Window initilized")
 
-    def redraw(self):
-        self.rootWidget.update_idletasks()
-        self.rootWidget.update()
+    def redraw(self) -> None:
+        self.__root.update_idletasks()
+        self.__root.update()
 
-    def drawLine(self, line, fillColor: str):
-        line.draw(self.canvas, fillColor)
-
-    def waitForClose(self):
-        self.windowRunning = True
-        while self.windowRunning:
+    def wait_for_close(self) -> None:
+        self.__running = True
+        while self.__running:
             self.redraw()
-        print("Window closed...")
+        print("window closed...")
 
-    def close(self):
-        self.windowRunning = False
+    def draw_line(self, line: "Line", fill_color: str = "black") -> None:
+        line.draw(self.__canvas, fill_color)
+
+    def close(self) -> None:
+        self.__running = False
+
 
 class Point:
-    def __init__(self, x: float, y: float):
+    def __init__(self, x: float, y: float) -> None:
         self.x = x
         self.y = y
 
-class Line:
-    def __init__(self, point1: Point, point2: Point) -> None:
-        self.point1 = point1
-        self.point2 = point2
 
-    def draw(self, canvas: Canvas, fillColor: str):
-        canvas.create_line(self.point1.x, self.point1.y, self.point2.x, self.point2.y, fill=fillColor, width=2)
+class Line:
+    def __init__(
+        self,
+        p1: Point,
+        p2: Point,
+    ) -> None:
+        self.p1 = p1
+        self.p2 = p2
+
+    def draw(self, canvas: Canvas, fill_color: str = "black") -> None:
+        canvas.create_line(
+            self.p1.x, self.p1.y, self.p2.x, self.p2.y, fill=fill_color, width=2
+        )
+
+
+class Cell:
+    def __init__(self, win: Window) -> None:
+        self.has_left_wall = True
+        self.has_right_wall = True
+        self.has_top_wall = True
+        self.has_bottom_wall = True
+        self.__x1 = -1.0
+        self.__x2 = -1.0
+        self.__y1 = -1.0
+        self.__y2 = -1.0
+        self.__win = win
+
+    def draw(self, x1: float, y1: float, x2: float, y2: float) -> None:
+        self.__x1 = x1
+        self.__x2 = x2
+        self.__y1 = y1
+        self.__y2 = y2
+        if self.has_left_wall:
+            line = Line(Point(x1, y1), Point(x1, y2))
+            self.__win.draw_line(line)
+        if self.has_top_wall:
+            line = Line(Point(x1, y1), Point(x2, y1))
+            self.__win.draw_line(line)
+        if self.has_right_wall:
+            line = Line(Point(x2, y1), Point(x2, y2))
+            self.__win.draw_line(line)
+        if self.has_bottom_wall:
+            line = Line(Point(x1, y2), Point(x2, y2))
+            self.__win.draw_line(line)
+
+    def draw_move(self, to_cell: "Cell", undo: bool = False) -> None:
+        if not undo:
+            FILLCOLOR = "red"
+        else: 
+            FILLCOLOR = "gray"
+
+        center_self = self.get_center()
+        center_other_cell = to_cell.get_center()
+        line = Line(center_self, center_other_cell)
+        self.__win.draw_line(line, FILLCOLOR)
+
+    def get_center(self):
+        return Point((self.__x1 + self.__x2) / 2, (self.__y1 + self.__y2) / 2)
+        
+
+
